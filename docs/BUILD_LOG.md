@@ -120,6 +120,26 @@ unchanged.
 reported the expected package and `READ_MEDIA_*` / `FOREGROUND_SERVICE*`
 permissions.
 
+### Release publishing (run #3)
+
+Artifact downloads from the Azure blob CDN kept dying on the author's
+connection (`wsarecv` timeout, 0 bytes received), so the pipeline now also
+publishes the APK as a **GitHub Release** asset, which is served from
+`objects.githubusercontent.com` and supports HTTP range / resume:
+
+- New step `Publish APK to GitHub Releases` (after the artifact upload):
+  tag `v<version from pubspec>`, asset `app-release.apk` + `app-release.apk.sha256`,
+  re-uploaded with `--clobber` on every build so the URL stays stable.
+- `permissions` changed from `contents: read` to `contents: write` (needed for
+  the release; the workflow never writes to the source tree).
+- Direct link: https://github.com/xorgxxx/nova_media/releases/download/v1.0.0/app-release.apk
+- Run: https://github.com/xorgxxx/nova_media/actions/runs/42065563450 (9m)
+
+That build's APK SHA-256 is
+`f73afeb0366310d6da132d1596e13904b475252c16713e23a1c7ddbfa9d1b451`
+(same size, 56,460,374 bytes). Flutter builds are not byte-reproducible, so
+the hash of run #2 above differs — always compare against the release asset.
+
 **Remaining caveats**
 
 - No run on a real device/emulator: install, permissions, playback and

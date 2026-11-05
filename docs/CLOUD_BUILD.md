@@ -2,16 +2,17 @@
 
 > **تم بالفعل ✅** — المشروع مرفوع على
 > https://github.com/xorgxxx/nova_media والبناء نجح.
-> **تحميل الـ APK:** https://github.com/xorgxxx/nova_media/actions/runs/42036653331
-> (قسم **Artifacts** في أسفل الصفحة → `nova-media-apk`).
+> **تحميل الـ APK مباشرة (بدون تسجيل دخول):**
+> https://github.com/xorgxxx/nova_media/releases/download/v1.0.0/app-release.apk
 >
 > | | |
 > |---|---|
 > | اسم الحزمة | `com.novamedia.nova_media` |
 > | الإصدار | `1.0.0` (versionCode 1) |
 > | الحجم | 56,460,374 بايت (53.9 ميجا) |
-> | SHA-256 | `6e5ccebad04399978e81bd455b4152487cd601fdb79c9f021262d5aedc0295d8` |
+> | SHA-256 | `f73afeb0366310d6da132d1596e13904b475252c16713e23a1c7ddbfa9d1b451` |
 > | التوقيع | مفتاح debug (للتجربة فقط، ليس لـ Google Play) |
+> | صفحة الـ Release | https://github.com/xorgxxx/nova_media/releases/tag/v1.0.0 |
 
 هذا المستند يشرح المسار الكامل: من رفع المشروع إلى GitHub، إلى تشغيل البناء
 على خوادم GitHub، إلى تنزيل ملف `app-release.apk` وتثبيته على الجوال.
@@ -118,15 +119,24 @@ git push -u origin main
 
 ## 6. تنزيل ملف APK
 
-### الطريقة الأولى — صفحة الملخص (الأسهل)
+### الطريقة الأولى — الرابط المباشر (الأسهل، بدون تسجيل دخول)
+
+```
+https://github.com/xorgxxx/nova_media/releases/download/v1.0.0/app-release.apk
+```
+
+هذا رابط عام دائم، يدعم استئناف التنزيل عند انقطاع الشبكة. بجانبه ملف
+التحقق: `app-release.apk.sha256` (نفس المجلد على صفحة الـ Release).
+
+### الطريقة الثانية — صفحة الملخص
 1. افتح صفحة التشغيل.
 2. في الأسفل ستجد قسم **Summary** يحتوي على:
    - اسم الملف وحجمه،
    - بصمة `SHA-256`،
-   - **رابط تحميل الـ APK**.
+   - رابط التحميل المباشر.
 3. اضغط الرابط. (يتطلب تسجيل الدخول بحساب GitHub.)
 
-### الطريقة الثانية — قسم Artifacts
+### الطريقة الثالثة — قسم Artifacts
 1. في أسفل صفحة التشغيل → قسم **Artifacts**.
 2. اضغط **nova-media-apk** لتنزيل ملف ZIP.
 3. فك ضغطه؛ ستجد:
@@ -137,8 +147,8 @@ git push -u origin main
    flutter-version.txt
    ```
 
-> ملاحظة: ملفات Artifact تُحفظ **30 يوماً** ثم تُحذف تلقائياً. يمكنك دائماً
-> إعادة تشغيل البناء للحصول على نسخة جديدة.
+> ملاحظة: ملفات Artifact تُحفظ **30 يوماً** ثم تُحذف تلقائياً. أما ملفات
+> الـ Release فتبقى بشكل دائم.
 
 ---
 
