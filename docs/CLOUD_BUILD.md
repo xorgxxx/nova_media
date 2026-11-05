@@ -1,5 +1,18 @@
 # البناء السحابي وتنزيل APK عبر GitHub Actions
 
+> **تم بالفعل ✅** — المشروع مرفوع على
+> https://github.com/xorgxxx/nova_media والبناء نجح.
+> **تحميل الـ APK:** https://github.com/xorgxxx/nova_media/actions/runs/42036653331
+> (قسم **Artifacts** في أسفل الصفحة → `nova-media-apk`).
+>
+> | | |
+> |---|---|
+> | اسم الحزمة | `com.novamedia.nova_media` |
+> | الإصدار | `1.0.0` (versionCode 1) |
+> | الحجم | 56,460,374 بايت (53.9 ميجا) |
+> | SHA-256 | `6e5ccebad04399978e81bd455b4152487cd601fdb79c9f021262d5aedc0295d8` |
+> | التوقيع | مفتاح debug (للتجربة فقط، ليس لـ Google Play) |
+
 هذا المستند يشرح المسار الكامل: من رفع المشروع إلى GitHub، إلى تشغيل البناء
 على خوادم GitHub، إلى تنزيل ملف `app-release.apk` وتثبيته على الجوال.
 **لا تحتاج إلى تنزيل Flutter أو Android SDK، ولا تحتاج إلى كتابة أي كود.**

@@ -91,6 +91,44 @@ Android SDK 36, `flutter pub get` (all constraints resolved), toolchain print.
 No Gradle/AGP code was involved yet — the job fails on analysis, before
 `tool/bootstrap.sh`. Tests/APK build therefore still unverified.
 
+## 2026-11-05 — CI run #2: **SUCCESS** (APK produced and verified)
+
+Run: https://github.com/xorgxxx/nova_media/actions/runs/42036653331
+Job: 8m13s (Gradle `assembleRelease` 5m35s). Every step green:
+`pub get` → `analyze` (0 errors) → `test` → `bootstrap.sh` → `build apk
+--release` → `verify_apk.sh` → artifact upload → summary.
+
+`tool/bootstrap.sh` generated the Android host project from the Flutter 3.47.9
+template, so AGP/Kotlin/Gradle came from the template itself
+(Gradle 9.3.1, AGP 9.x, compileSdk 36, minSdk 24, NDK 28.2.13676358) and no
+plugin needed a code change. `flutter create` and the override copies worked
+unchanged.
+
+**APK**
+
+| Field | Value |
+|---|---|
+| Package | `com.novamedia.nova_media` |
+| versionName / versionCode | `1.0.0` / `1` |
+| compileSdk / targetSdk | 36 / 36 |
+| Size | 56,460,374 bytes (53.9 MiB) — universal APK with all ABIs |
+| SHA-256 | `6e5ccebad04399978e81bd455b4152487cd601fdb79c9f021262d5aedc0295d8` |
+| Signature | debug key (per `AGENTS.md`; not accepted by Google Play) |
+
+`verify_apk.sh` confirmed: `AndroidManifest.xml`, `classes.dex`,
+`lib/arm64-v8a/libflutter.so`, `libapp.so` (AOT), and `aapt2 dump badging`
+reported the expected package and `READ_MEDIA_*` / `FOREGROUND_SERVICE*`
+permissions.
+
+**Remaining caveats**
+
+- No run on a real device/emulator: install, permissions, playback and
+  background audio are still untested at runtime.
+- One info-level lint remains (`ConcatenatingAudioSource` deprecated in
+  just_audio 0.10) — deliberately not changed, see the table above.
+- `actions/checkout@v4`, `actions/setup-java@v4` print a Node.js 20
+  deprecation warning (still functional).
+
 **Not verified yet**
 
 - First CI run: Gradle/AGP ↔ plugin compatibility, manifest merger, and any
