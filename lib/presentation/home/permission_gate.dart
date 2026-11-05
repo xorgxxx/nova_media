@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+// Brings the PermissionState extension (hasAccess) into scope.
+import 'package:photo_manager/photo_manager.dart';
 
 import '../../application/providers.dart';
 import '../../core/theme/app_theme.dart';

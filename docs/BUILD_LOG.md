@@ -74,6 +74,23 @@ from pub.dev and their sources checked; no call site needed changing yet:
   `build-tools;36.0.0`, `ndk;28.2.13676358` are installed explicitly, because
   the runner image lags behind Flutter's `compileSdk`.
 
+## 2026-11-05 — CI run #1 (first real compile)
+
+Environment steps all passed: JDK 17, Flutter 3.47.9 / Dart 3.13.7,
+Android SDK 36, `flutter pub get` (all constraints resolved), toolchain print.
+
+**Failed:** `flutter analyze` (1 error, 2 warnings, 2 infos).
+
+| Location | Message | Root cause | Fix |
+|---|---|---|---|
+| `lib/presentation/home/permission_gate.dart:43` | `The getter 'hasAccess' isn't defined for the type 'PermissionState'` | **error** — `hasAccess` is an extension (`PermissionStateExt`) that photo_manager exports, but this file never imported `photo_manager`, so the extension was not in scope. | Added `import 'package:photo_manager/photo_manager.dart';` |
+| `lib/application/providers.dart:151` | `invalid_null_aware_operator` | warning — since just_audio 0.10 `sequenceStateStream` emits a non-null `SequenceState`, so `s?.` was redundant. | `s?.currentSource` → `s.currentSource` |
+| `lib/data/repositories/library_repository.dart:9,10` | `prefer_const_constructors` | info — `PermissionRequestOption` / `AndroidPermission` have const constructors. | `=> const PermissionRequestOption(...)` |
+| `lib/application/audio_controller.dart:43` | `ConcatenatingAudioSource` is deprecated | info — just_audio 0.10 prefers `AudioPlayer.setAudioSources`. The old API still works and is the only one that accepts a prebuilt `AudioSource` list with `initialIndex`. | **Left as-is**: no behavioural risk, deprecation is info-level and non-fatal. |
+
+No Gradle/AGP code was involved yet — the job fails on analysis, before
+`tool/bootstrap.sh`. Tests/APK build therefore still unverified.
+
 **Not verified yet**
 
 - First CI run: Gradle/AGP ↔ plugin compatibility, manifest merger, and any

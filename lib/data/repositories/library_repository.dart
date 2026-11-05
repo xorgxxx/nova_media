@@ -6,7 +6,7 @@ import '../models/media_kind.dart';
 
 /// Thin wrapper over photo_manager (Android MediaStore).
 class LibraryRepository {
-  PermissionRequestOption get _option => PermissionRequestOption(
+  PermissionRequestOption get _option => const PermissionRequestOption(
         androidPermission: AndroidPermission(
           type: RequestType.all,
           mediaLocation: false,

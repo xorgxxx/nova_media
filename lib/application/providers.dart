@@ -148,7 +148,7 @@ final audioControllerProvider = Provider<AudioController>((ref) {
 
 final currentMediaItemProvider = StreamProvider<MediaItem?>((ref) {
   final player = ref.watch(audioControllerProvider).player;
-  return player.sequenceStateStream.map((s) => s?.currentSource?.tag as MediaItem?);
+  return player.sequenceStateStream.map((s) => s.currentSource?.tag as MediaItem?);
 });
 
 final playerStateProvider = StreamProvider<PlayerState>(
