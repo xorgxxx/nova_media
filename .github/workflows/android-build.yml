@@ -1,0 +1,183 @@
+name: Android APK Build
+
+# Runs on every push to the main branches and can be started manually from the
+# Actions tab (Run workflow). Everything is built on GitHub-hosted runners, so
+# no Flutter/Android SDK is ever installed on the developer machine.
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.47.9'          # stable, Dart 3.13.7
+  JAVA_VERSION: '17'
+  ANDROID_COMPILE_SDK: '36'
+  ANDROID_BUILD_TOOLS: '36.0.0'
+  ANDROID_NDK_VERSION: '28.2.13676358'
+
+jobs:
+  build-apk:
+    name: Build release APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Set up Flutter (stable, pinned)
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+          pub-cache: true
+
+      - name: Set up Android SDK (platform 36 + build-tools + NDK)
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(command -v sdkmanager || true)"
+          fi
+          if [ -z "$SDKMANAGER" ] || [ ! -x "$SDKMANAGER" ]; then
+            echo "::error::sdkmanager not found on the runner"
+            exit 1
+          fi
+
+          echo "Android SDK root: $SDK_ROOT"
+          # Accepting licenses is required for AGP to use the SDK.
+          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses > /dev/null 2>&1 || true
+          "$SDKMANAGER" --sdk_root="$SDK_ROOT" --install \
+            "platform-tools" \
+            "platforms;android-${ANDROID_COMPILE_SDK}" \
+            "build-tools;${ANDROID_BUILD_TOOLS}" \
+            "ndk;${ANDROID_NDK_VERSION}"
+
+          {
+            echo "ANDROID_HOME=$SDK_ROOT"
+            echo "ANDROID_SDK_ROOT=$SDK_ROOT"
+          } >> "$GITHUB_ENV"
+          echo "$SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
+
+      - name: Print toolchain versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter --version | tee flutter-version.txt
+          java -version 2>&1 | head -n 3
+          flutter doctor -v || true
+
+          FLUTTER_RUNTIME="$(flutter --version --machine | python3 -c \
+            'import json,sys; d=json.load(sys.stdin); print("Flutter " + d["frameworkVersion"] + " / Dart " + d["dartSdkVersion"])')"
+          echo "FLUTTER_RUNTIME=$FLUTTER_RUNTIME" >> "$GITHUB_ENV"
+
+      - name: Install Dart/Flutter dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter pub get
+
+      - name: Analyze (errors are fatal, warnings/infos are not)
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter analyze --no-fatal-warnings --no-fatal-infos
+
+      - name: Run tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter test
+
+      - name: Bootstrap Android project (tool/bootstrap.sh)
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tool/bootstrap.sh
+
+      - name: Build release APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter build apk --release
+
+      - name: Verify APK (tool/verify_apk.sh)
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tool/verify_apk.sh | tee verify-apk.txt
+
+          APK="build/app/outputs/flutter-apk/app-release.apk"
+          SIZE="$(stat -c%s "$APK")"
+          SHA="$(sha256sum "$APK" | awk '{print $1}')"
+          printf '%s  app-release.apk\n' "$SHA" > app-release.apk.sha256
+
+          {
+            echo "APK_SIZE=$SIZE"
+            echo "APK_SHA256=$SHA"
+          } >> "$GITHUB_ENV"
+
+      - name: Upload APK artifact
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: nova-media-apk
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            app-release.apk.sha256
+            verify-apk.txt
+            flutter-version.txt
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish build summary
+        if: always()
+        shell: bash
+        run: |
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          ARTIFACT_URL="${{ steps.upload.outputs.artifact-url }}"
+          APK="build/app/outputs/flutter-apk/app-release.apk"
+
+          {
+            echo "## Nova Media — Android APK"
+            echo ""
+            echo "- الحالة: **${{ job.status }}**"
+            echo "- Flutter: ${FLUTTER_RUNTIME:-غير معروف}"
+            echo "- Java: $(java -version 2>&1 | head -n 1)"
+            echo ""
+            if [ -f "$APK" ]; then
+              echo "### ملف APK"
+              echo ""
+              echo '```text'
+              ls -lh "$APK"
+              sha256sum "$APK"
+              echo '```'
+              echo ""
+              echo "**رابط تحميل الـ APK:** ${ARTIFACT_URL:-$RUN_URL#artifacts}"
+              echo ""
+              echo "> ملاحظة: تنزيل الـ Artifact من GitHub يتطلب تسجيل الدخول بحساب GitHub."
+            else
+              echo "لم يُنتج ملف APK في هذه المحاولة — راجع سجل الخطوات أعلاه لمعرفة سبب الفشل."
+            fi
+            echo ""
+            echo "**صفحة التشغيل:** $RUN_URL"
+          } >> "$GITHUB_STEP_SUMMARY"

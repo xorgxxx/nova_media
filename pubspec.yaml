@@ -1,0 +1,28 @@
+name: nova_media
+description: Nova Media - local videos, photos and music in one app.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.6.1          # state management (keep on 2.x; 3.x changes APIs)
+  photo_manager: ^3.6.4             # MediaStore access (images/videos/audio) + permissions
+  photo_manager_image_provider: ^2.2.0
+  video_player: ^2.9.2              # official video playback (ExoPlayer on Android)
+  just_audio: '>=0.9.43 <0.11.0'    # audio engine
+  just_audio_background: ^0.0.1-beta.14  # background playback, notification, lock screen
+  sqflite: ^2.4.1                   # local DB (favorites, playlists, resume points)
+  path: ^1.9.0
+  wakelock_plus: ^1.2.8             # keep screen on during video
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
