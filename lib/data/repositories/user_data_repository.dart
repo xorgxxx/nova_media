@@ -96,6 +96,83 @@ ORDER BY p.created_at DESC''', [kind.name]);
         where: 'playlist_id = ? AND asset_id = ?', whereArgs: [playlistId, assetId]);
   }
 
+  // ---- Settings --------------------------------------------------------
+
+  Future<Map<String, String>> settings() async {
+    final rows = await _db.query('settings');
+    return {
+      for (final row in rows) row['key']! as String: row['value']! as String,
+    };
+  }
+
+  Future<void> setSetting(String key, String value) async {
+    await _db.insert(
+      'settings',
+      {'key': key, 'value': value},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  // ---- File-size cache -------------------------------------------------
+
+  /// Returns cached byte sizes for the assets whose modification time still
+  /// matches [modifiedAt]. Anything stale (or unknown) is simply omitted, so
+  /// the caller knows it has to fetch just those items again.
+  Future<Map<String, int>> cachedAssetSizes(Map<String, int> modifiedAt) async {
+    if (modifiedAt.isEmpty) return <String, int>{};
+    final rows = await _db.query('asset_sizes');
+    final result = <String, int>{};
+    for (final row in rows) {
+      final id = row['asset_id']! as String;
+      final expected = modifiedAt[id];
+      if (expected == null) continue;
+      if ((row['modified_at']! as int) == expected) {
+        result[id] = row['size_bytes']! as int;
+      }
+    }
+    return result;
+  }
+
+  Future<void> saveAssetSizes(
+    Map<String, ({int size, int modifiedAt})> values,
+  ) async {
+    if (values.isEmpty) return;
+    final batch = _db.batch();
+    values.forEach((id, value) {
+      batch.insert(
+        'asset_sizes',
+        {
+          'asset_id': id,
+          'size_bytes': value.size,
+          'modified_at': value.modifiedAt,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    });
+    await batch.commit(noResult: true);
+  }
+
+  // ---- Media removal ---------------------------------------------------
+
+  /// Drops every piece of user data that points at assets deleted from the
+  /// device (favorites, playlist entries, resume points and cached sizes).
+  Future<void> removeAssets(Iterable<String> assetIds) async {
+    final ids = assetIds.toList(growable: false);
+    if (ids.isEmpty) return;
+    await _db.transaction((txn) async {
+      for (var start = 0; start < ids.length; start += 400) {
+        final end = (start + 400 < ids.length) ? start + 400 : ids.length;
+        final chunk = ids.sublist(start, end);
+        final placeholders = List.filled(chunk.length, '?').join(',');
+        await txn.delete('favorites', where: 'asset_id IN ($placeholders)', whereArgs: chunk);
+        await txn.delete('playlist_items',
+            where: 'asset_id IN ($placeholders)', whereArgs: chunk);
+        await txn.delete('progress', where: 'asset_id IN ($placeholders)', whereArgs: chunk);
+        await txn.delete('asset_sizes', where: 'asset_id IN ($placeholders)', whereArgs: chunk);
+      }
+    });
+  }
+
   // ---- Resume points ---------------------------------------------------
 
   Future<ResumePoint?> getProgress(String assetId) async {

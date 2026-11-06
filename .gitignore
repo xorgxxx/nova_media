@@ -9,3 +9,5 @@ android/key.properties
 *.iml
 .idea/
 tool/env.sh
+__pycache__/
+*.pyc

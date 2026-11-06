@@ -8,14 +8,23 @@ import 'package:photo_manager_image_provider/photo_manager_image_provider.dart';
 
 import '../../application/providers.dart';
 import '../../core/utils/format.dart';
+import '../../data/models/album_info.dart';
 import '../../data/models/media_kind.dart';
+import '../common/delete_actions.dart';
 
-/// Full-screen swipeable viewer: pinch / double-tap zoom, immersive mode, favorites, info.
+/// Full-screen swipeable viewer: pinch / double-tap zoom, immersive mode,
+/// favorites, file info and deletion.
 class PhotoViewerPage extends ConsumerStatefulWidget {
-  const PhotoViewerPage({super.key, required this.assets, required this.initialIndex});
+  const PhotoViewerPage({
+    super.key,
+    required this.assets,
+    required this.initialIndex,
+    this.album,
+  });
 
   final List<AssetEntity> assets;
   final int initialIndex;
+  final AlbumRef? album;
 
   @override
   ConsumerState<PhotoViewerPage> createState() => _PhotoViewerPageState();
@@ -61,6 +70,19 @@ class _PhotoViewerPageState extends ConsumerState<PhotoViewerPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _deleteCurrent(AssetEntity asset) async {
+    final deleted = await deleteMediaAssets(
+      context: context,
+      ref: ref,
+      kind: MediaKind.image,
+      assetIds: [asset.id],
+      album: widget.album,
+    );
+    if (deleted > 0 && mounted) {
+      Navigator.of(context).maybePop();
+    }
   }
 
   @override
@@ -139,6 +161,11 @@ class _PhotoViewerPageState extends ConsumerState<PhotoViewerPage> {
                             color: Colors.white,
                             icon: const Icon(Icons.info_outline_rounded),
                             onPressed: () => _showInfo(current),
+                          ),
+                          IconButton(
+                            color: Colors.white,
+                            icon: const Icon(Icons.delete_outline_rounded),
+                            onPressed: () => _deleteCurrent(current),
                           ),
                         ],
                       ),

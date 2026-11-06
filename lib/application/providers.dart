@@ -4,11 +4,13 @@ import 'package:just_audio_background/just_audio_background.dart' show MediaItem
 import 'package:photo_manager/photo_manager.dart';
 
 import '../data/models/album_info.dart';
+import '../data/models/app_settings.dart';
 import '../data/models/media_kind.dart';
 import '../data/models/playlist.dart';
 import '../data/models/resume_point.dart';
 import '../data/repositories/library_repository.dart';
 import '../data/repositories/user_data_repository.dart';
+import '../data/services/media_sort_service.dart';
 import 'audio_controller.dart';
 
 // ---- Repositories ---------------------------------------------------------
@@ -49,10 +51,133 @@ class PermissionNotifier extends AsyncNotifier<PermissionState> {
 final permissionProvider =
     AsyncNotifierProvider<PermissionNotifier, PermissionState>(PermissionNotifier.new);
 
+// ---- Settings -------------------------------------------------------------
+
+class SettingsNotifier extends AsyncNotifier<AppSettings> {
+  static const _themeKey = 'theme_mode';
+  static const _gridKey = 'grid_columns';
+
+  @override
+  Future<AppSettings> build() async {
+    final defaults = AppSettings.defaults();
+    Map<String, String> raw;
+    try {
+      raw = await ref.read(userDataRepositoryProvider).settings();
+    } catch (_) {
+      raw = const <String, String>{};
+    }
+
+    final fields = <MediaKind, SortField>{};
+    final orders = <MediaKind, SortOrder>{};
+    for (final kind in MediaKind.values) {
+      fields[kind] = parseSortField(
+        raw['sort_field_${kind.name}'],
+        defaults.fieldFor(kind),
+      );
+      orders[kind] = parseSortOrder(
+        raw['sort_order_${kind.name}'],
+        defaults.orderFor(kind),
+      );
+    }
+
+    final columns = int.tryParse(raw[_gridKey] ?? '') ?? defaults.gridColumns;
+    return AppSettings(
+      themeMode: parseThemeMode(raw[_themeKey], defaults.themeMode),
+      gridColumns: columns.clamp(2, 5).toInt(),
+      sortFields: fields,
+      sortOrders: orders,
+    );
+  }
+
+  AppSettings get _current => state.valueOrNull ?? AppSettings.defaults();
+
+  Future<void> _write(Map<String, String> values, AppSettings next) async {
+    state = AsyncData(next); // optimistic: the UI reacts immediately
+    try {
+      final repo = ref.read(userDataRepositoryProvider);
+      for (final entry in values.entries) {
+        await repo.setSetting(entry.key, entry.value);
+      }
+    } catch (_) {
+      // Keep the in-memory choice even if persistence failed.
+    }
+  }
+
+  Future<void> setThemeMode(AppThemeMode mode) {
+    return _write(
+      {_themeKey: mode.name},
+      _current.copyWith(themeMode: mode),
+    );
+  }
+
+  Future<void> setGridColumns(int columns) {
+    final clamped = columns.clamp(2, 5).toInt();
+    return _write(
+      {_gridKey: '$clamped'},
+      _current.copyWith(gridColumns: clamped),
+    );
+  }
+
+  Future<void> setSort(MediaKind kind, SortField field, SortOrder order) {
+    return _write(
+      {
+        'sort_field_${kind.name}': field.name,
+        'sort_order_${kind.name}': order.name,
+      },
+      _current.withSort(kind, field, order),
+    );
+  }
+}
+
+final settingsProvider =
+    AsyncNotifierProvider<SettingsNotifier, AppSettings>(SettingsNotifier.new);
+
 // ---- Library --------------------------------------------------------------
 
-final libraryAssetsProvider = FutureProvider.family<List<AssetEntity>, MediaKind>(
-  (ref, kind) => ref.watch(libraryRepositoryProvider).loadAll(kind),
+class LibraryAssetsNotifier extends FamilyAsyncNotifier<List<AssetEntity>, MediaKind> {
+  @override
+  Future<List<AssetEntity>> build(MediaKind arg) =>
+      ref.read(libraryRepositoryProvider).loadAll(arg);
+
+  /// Removes assets from the in-memory list after a successful deletion,
+  /// without re-scanning the whole MediaStore library.
+  void removeIds(Iterable<String> ids) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    final removed = ids.toSet();
+    if (removed.isEmpty) return;
+    state = AsyncData([
+      for (final asset in current)
+        if (!removed.contains(asset.id)) asset,
+    ]);
+  }
+
+  /// Explicit pull-to-refresh: the only path that re-scans MediaStore.
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(
+      () => ref.read(libraryRepositoryProvider).loadAll(arg),
+    );
+  }
+}
+
+final libraryAssetsProvider =
+    AsyncNotifierProvider.family<LibraryAssetsNotifier, List<AssetEntity>, MediaKind>(
+  LibraryAssetsNotifier.new,
+);
+
+/// Raw list sorted with the user's current "Sort by" + "Sort order" choice.
+final sortedAssetsProvider = FutureProvider.family<List<AssetEntity>, MediaKind>(
+  (ref, kind) async {
+    final assets = await ref.watch(libraryAssetsProvider(kind).future);
+    final settings = await ref.watch(settingsProvider.future);
+    return MediaSortService(ref.watch(userDataRepositoryProvider)).sort(
+      assets,
+      kind: kind,
+      field: settings.fieldFor(kind),
+      order: settings.orderFor(kind),
+    );
+  },
 );
 
 final assetMapProvider = Provider.family<Map<String, AssetEntity>, MediaKind>((ref, kind) {
@@ -66,6 +191,20 @@ final albumsProvider = FutureProvider.family<List<AlbumInfo>, MediaKind>(
 
 final albumAssetsProvider = FutureProvider.family<List<AssetEntity>, AlbumRef>(
   (ref, album) => ref.watch(libraryRepositoryProvider).loadAlbumAssets(album),
+);
+
+/// Album contents sorted with the same rules as the main photo grid.
+final sortedAlbumAssetsProvider = FutureProvider.family<List<AssetEntity>, AlbumRef>(
+  (ref, album) async {
+    final assets = await ref.watch(albumAssetsProvider(album).future);
+    final settings = await ref.watch(settingsProvider.future);
+    return MediaSortService(ref.watch(userDataRepositoryProvider)).sort(
+      assets,
+      kind: album.kind,
+      field: settings.fieldFor(album.kind),
+      order: settings.orderFor(album.kind),
+    );
+  },
 );
 
 // ---- Favorites ------------------------------------------------------------

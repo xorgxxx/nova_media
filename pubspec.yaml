@@ -1,7 +1,7 @@
 name: nova_media
-description: Nova Media - local videos, photos and music in one app.
+description: AS Vault - a private, on-device vault for videos, photos and music.
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.1.0+2
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
@@ -15,9 +15,10 @@ dependencies:
   video_player: ^2.9.2              # official video playback (ExoPlayer on Android)
   just_audio: '>=0.9.43 <0.11.0'    # audio engine
   just_audio_background: ^0.0.1-beta.14  # background playback, notification, lock screen
-  sqflite: ^2.4.1                   # local DB (favorites, playlists, resume points)
+  sqflite: ^2.4.1                   # local DB (favorites, playlists, resume points, settings)
   path: ^1.9.0
   wakelock_plus: ^1.2.8             # keep screen on during video
+  package_info_plus: ^8.1.0         # real version/build shown in Settings
 
 dev_dependencies:
   flutter_test:
@@ -26,3 +27,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icon/app_icon.png

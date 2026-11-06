@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/common_widgets.dart';
 import '../../data/models/media_kind.dart';
 import '../../data/models/playlist.dart';
+import '../common/delete_actions.dart';
 import '../music/track_tile.dart';
 import '../video/video_actions.dart';
 import '../video/video_tile.dart';
@@ -42,6 +43,21 @@ class PlaylistDetailPage extends ConsumerWidget {
         await openVideoPlayer(context, items, 0);
       } else {
         await ref.read(audioControllerProvider).playQueue(items, 0, shuffle: shuffle ? true : null);
+      }
+    }
+
+    Future<void> deleteItem(AssetEntity asset) async {
+      final deleted = await deleteMediaAssets(
+        context: context,
+        ref: ref,
+        kind: kind,
+        assetIds: [asset.id],
+      );
+      if (deleted > 0 && kind == MediaKind.audio) {
+        final currentId = ref.read(currentMediaItemProvider).valueOrNull?.id;
+        if (currentId == asset.id) {
+          await ref.read(audioControllerProvider).player.stop();
+        }
       }
     }
 
@@ -111,6 +127,7 @@ class PlaylistDetailPage extends ConsumerWidget {
                               onFavorite: () =>
                                   ref.read(favoritesProvider(kind).notifier).toggle(asset.id),
                               onAddToPlaylist: () => showAddToPlaylistSheet(context, kind, asset.id),
+                              onDelete: () => deleteItem(asset),
                             )
                           : TrackTile(
                               asset: asset,
@@ -120,6 +137,7 @@ class PlaylistDetailPage extends ConsumerWidget {
                               onFavorite: () =>
                                   ref.read(favoritesProvider(kind).notifier).toggle(asset.id),
                               onAddToPlaylist: () => showAddToPlaylistSheet(context, kind, asset.id),
+                              onDelete: () => deleteItem(asset),
                             );
                       return Dismissible(
                         key: ValueKey('pl-$playlistId-${asset.id}'),

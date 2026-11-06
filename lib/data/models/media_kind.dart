@@ -13,4 +13,26 @@ extension MediaKindX on MediaKind {
         return RequestType.audio;
     }
   }
+
+  String get label {
+    switch (this) {
+      case MediaKind.video:
+        return 'Videos';
+      case MediaKind.image:
+        return 'Photos';
+      case MediaKind.audio:
+        return 'Music';
+    }
+  }
+
+  String get singularLabel {
+    switch (this) {
+      case MediaKind.video:
+        return 'video';
+      case MediaKind.image:
+        return 'photo';
+      case MediaKind.audio:
+        return 'track';
+    }
+  }
 }

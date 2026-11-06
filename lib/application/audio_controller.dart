@@ -32,7 +32,7 @@ class AudioController {
           id: asset.id,
           title: cleanTitle(asset.title),
           album: _folderName(asset),
-          artist: _folderName(asset) ?? 'Nova Media',
+          artist: _folderName(asset) ?? 'AS Vault',
           duration: Duration(seconds: asset.duration),
         ),
       ));

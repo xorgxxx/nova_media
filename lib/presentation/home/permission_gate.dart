@@ -53,45 +53,74 @@ class _PermissionView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
             colors: [
-              Accents.video.withAlpha(60),
-              theme.colorScheme.surface,
-              Accents.music.withAlpha(60),
+              Color.alphaBlend(cs.primary.withAlpha(38), cs.surface),
+              cs.surface,
+              cs.surface,
             ],
+            stops: const [0, 0.45, 1],
           ),
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(28),
+            padding: const EdgeInsets.fromLTRB(28, 12, 28, 28),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
-                  children: [
-                    Icon(Icons.play_circle_fill_rounded, size: 40, color: Accents.video),
-                    SizedBox(width: 8),
-                    Icon(Icons.photo_library_rounded, size: 40, color: Accents.photo),
-                    SizedBox(width: 8),
-                    Icon(Icons.library_music_rounded, size: 40, color: Accents.music),
-                  ],
+                const Spacer(flex: 2),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(26),
+                  child: Image.asset(
+                    'assets/icon/app_icon.png',
+                    width: 92,
+                    height: 92,
+                    errorBuilder: (context, error, stack) => Container(
+                      width: 92,
+                      height: 92,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(26),
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Accents.brand, Color(0xFF4A0B13)],
+                        ),
+                      ),
+                      child: const Icon(Icons.water_drop_rounded,
+                          color: Colors.white, size: 40),
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 24),
-                Text('Nova Media', style: theme.textTheme.displaySmall),
-                const SizedBox(height: 12),
+                const SizedBox(height: 28),
                 Text(
-                  'Your videos, photos and music in one place. '
-                  'Allow access to your media so Nova can find and play them. '
-                  'Nothing leaves your device.',
-                  style: theme.textTheme.bodyLarge,
+                  'AS VAULT',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    letterSpacing: 3.2,
+                    color: cs.primary,
+                  ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 10),
+                Text(
+                  'Your private\nmedia vault.',
+                  style: theme.textTheme.displaySmall?.copyWith(fontSize: 42),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Videos, photos and music — beautifully organised, entirely on this device. '
+                  'Grant access so AS Vault can find your files. Nothing is uploaded, ever.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: cs.onSurfaceVariant,
+                    height: 1.55,
+                  ),
+                ),
+                const Spacer(flex: 3),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
@@ -99,12 +128,22 @@ class _PermissionView extends ConsumerWidget {
                     child: const Text('Allow access'),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
                     onPressed: () => ref.read(libraryRepositoryProvider).openSettings(),
                     child: const Text('Open app settings'),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: Text(
+                    'Android 13+ asks only for Photos, Videos and Audio access.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: cs.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ],
