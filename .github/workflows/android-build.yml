@@ -167,15 +167,15 @@ jobs:
 
           NOTES="AS Vault ${VERSION} (arm64-v8a only)
 
-Private, on-device media manager for videos, photos and music.
+          Private, on-device media manager for videos, photos and music.
 
-- Real delete with Android's official confirmation sheet
-- Independent Sort by + Sort order, remembered per section
-- Redesigned premium interface and settings
-- Thumbnail caching and incremental library updates
+          - Real delete with Android's official confirmation sheet
+          - Independent Sort by + Sort order, remembered per section
+          - Redesigned premium interface and settings
+          - Thumbnail caching and incremental library updates
 
-Built from commit ${GITHUB_SHA:0:7}.
-SHA-256: ${APK_SHA256}"
+          Built from commit ${GITHUB_SHA:0:7}.
+          SHA-256: ${APK_SHA256}"
 
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$ASSET" "$ASSET.sha256" --clobber --repo "$GITHUB_REPOSITORY"
