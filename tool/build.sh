@@ -6,5 +6,5 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"; cd "$ROOT"
 bash tool/bootstrap.sh
 flutter analyze
 flutter test
-flutter build apk --release
+flutter build apk --release --target-platform android-arm64
 bash tool/verify_apk.sh

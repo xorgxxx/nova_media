@@ -3,16 +3,17 @@
 > **تم بالفعل ✅** — المشروع مرفوع على
 > https://github.com/xorgxxx/nova_media والبناء نجح.
 > **تحميل الـ APK مباشرة (بدون تسجيل دخول):**
-> https://github.com/xorgxxx/nova_media/releases/download/v1.0.0/app-release.apk
+> https://github.com/xorgxxx/nova_media/releases/download/v1.1.0/AS-Vault-1.1.0-arm64.apk
 >
 > | | |
 > |---|---|
-> | اسم الحزمة | `com.novamedia.nova_media` |
-> | الإصدار | `1.0.0` (versionCode 1) |
-> | الحجم | 56,460,374 بايت (53.9 ميجا) |
-> | SHA-256 | `f73afeb0366310d6da132d1596e13904b475252c16713e23a1c7ddbfa9d1b451` |
+> | اسم الحزمة | `com.novamedia.nova_media` (بدون تغيير، ليبقى التحديث فوق النسخة القديمة) |
+> | الإصدار | `1.1.0` (versionCode 2) |
+> | المعمارية | arm64-v8a فقط (هواتف 2020+) |
+> | الحجم | 21,937,428 بايت (20.9 ميجا) |
+> | SHA-256 | `dd718dc2a8d9a9cd6d6994a3c62ad269896edcd64f4b017eaad93c3394612e13` |
 > | التوقيع | مفتاح debug (للتجربة فقط، ليس لـ Google Play) |
-> | صفحة الـ Release | https://github.com/xorgxxx/nova_media/releases/tag/v1.0.0 |
+> | صفحة الـ Release | https://github.com/xorgxxx/nova_media/releases/tag/v1.1.0 |
 
 هذا المستند يشرح المسار الكامل: من رفع المشروع إلى GitHub، إلى تشغيل البناء
 على خوادم GitHub، إلى تنزيل ملف `app-release.apk` وتثبيته على الجوال.
@@ -122,11 +123,11 @@ git push -u origin main
 ### الطريقة الأولى — الرابط المباشر (الأسهل، بدون تسجيل دخول)
 
 ```
-https://github.com/xorgxxx/nova_media/releases/download/v1.0.0/app-release.apk
+https://github.com/xorgxxx/nova_media/releases/download/v1.1.0/AS-Vault-1.1.0-arm64.apk
 ```
 
 هذا رابط عام دائم، يدعم استئناف التنزيل عند انقطاع الشبكة. بجانبه ملف
-التحقق: `app-release.apk.sha256` (نفس المجلد على صفحة الـ Release).
+التحقق: `AS-Vault-1.1.0-arm64.apk.sha256` (نفس المجلد على صفحة الـ Release).
 
 ### الطريقة الثانية — صفحة الملخص
 1. افتح صفحة التشغيل.
@@ -138,7 +139,7 @@ https://github.com/xorgxxx/nova_media/releases/download/v1.0.0/app-release.apk
 
 ### الطريقة الثالثة — قسم Artifacts
 1. في أسفل صفحة التشغيل → قسم **Artifacts**.
-2. اضغط **nova-media-apk** لتنزيل ملف ZIP.
+2. اضغط **as-vault-apk** لتنزيل ملف ZIP.
 3. فك ضغطه؛ ستجد:
    ```
    app-release.apk
@@ -172,7 +173,7 @@ https://github.com/xorgxxx/nova_media/releases/download/v1.0.0/app-release.apk
   أسرار داخل الكود).
 - **التكلفة:** المستودعات العامة لا تستهلك دقائق مدفوعة.
 - **تحديث التطبيق:** عدّل الكود ثم `git push`؛ سيُبنى APK جديد. غيّر
-  `version: 1.0.0+1` في `pubspec.yaml` إذا أردت ترقية رقم الإصدار.
+  `version: 1.1.0+2` في `pubspec.yaml` إذا أردت ترقية رقم الإصدار.
 - **بدون جهاز:** البناء يتحقق من سلامة الملف فقط (`tool/verify_apk.sh`)؛
   التشغيل الفعلي على الجوال هو الاختبار النهائي.
 

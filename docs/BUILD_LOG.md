@@ -2,6 +2,110 @@
 
 Every change made while getting `nova_media` to build is recorded here (see `AGENTS.md`).
 
+## 2026-11-07 — AS Vault 1.1.0 (arm64-only): real delete, sorting, redesign, settings, new icon
+
+**Scope.** The app keeps its layered architecture, package id (`com.novamedia.nova_media`),
+database (`nova_media.db`) and every 1.0.0 feature. Version bumped to `1.1.0+2`;
+user-visible name is **AS Vault** everywhere (launcher, app title, settings, release,
+README). The package id is deliberately unchanged so an in-place update keeps
+favorites, playlists and resume points.
+
+**Real deletion (images / videos / audio)**
+
+- `lib/presentation/common/delete_actions.dart` — in-app confirmation, then
+  `PhotoManager.editor.deleteWithIds()` which uses Android's official
+  `MediaStore.createDeleteRequest` sheet on API 30+. Only the ids Android
+  actually deleted are removed from the in-memory list; favorites, playlists,
+  resume points and album counts are invalidated. No full MediaStore rescan.
+- Multi-select + select-all wired into the video, photo and music tabs
+  (`video_tab.dart`, `photos_tab.dart`, `music_tab.dart`), plus playlist item
+  removal (`playlist_widgets.dart`).
+- `UserDataRepository.removeAssets()` cleans DB rows for deleted ids.
+- Permissions: `READ_MEDIA_IMAGES/VIDEO/AUDIO` (API 33+),
+  `READ_EXTERNAL_STORAGE` (maxSdk 32), `WRITE_EXTERNAL_STORAGE` (maxSdk 29) —
+  no storage-management or broad file permissions.
+
+**Sorting**
+
+- `lib/core/utils/media_sort.dart` — pure sort for **Name / Size / Date /
+  Duration** × **Ascending / Descending**, per media type (Duration hidden for
+  still images), deterministic ties, original list never mutated.
+- `lib/data/services/media_sort_service.dart` — byte sizes resolved with
+  12-way concurrency and cached in SQLite (`asset_sizes`, keyed by modified
+  date) so later sorts do not touch MediaStore.
+- Settings persisted per kind (`sort_field_<kind>`, `sort_order_<kind>`);
+  `sort_sheet.dart` offers the two independent choices with directional hints.
+- `test/sort_test.dart` covers fields, orders, parse fallbacks, duration on
+  images, name/size/date/duration ordering and input immutability.
+
+**UI redesign**
+
+- New premium theme (`app_theme.dart`), typography scale, section accents,
+  cards, empty states, sort sheet, confirmations and a 4-tab shell
+  (`home_shell.dart`) with animated tab transitions.
+- Rewritten video/photos/music tabs and tiles, album page, photo viewer,
+  mini-player integration; list rows and grids share spacing and radii.
+
+**Performance**
+
+- Bounded Flutter image cache (600 images / 160 MB) in `main.dart`.
+- `photo_manager_image_provider` thumbnails + `cacheWidth` on grids; lazy
+  `SliverList`/`SliverGrid` and range-based album loading (`LibraryRepository`).
+- Deletion updates only the affected list; pull-to-refresh is the only path
+  that rescans MediaStore.
+- `AsyncValue.when(skipLoadingOnReload: true)` keeps lists on screen while a
+  re-sort completes, avoiding a loading flash after each change.
+
+**Settings page** (`settings_page.dart`)
+
+- Recent files, real storage free/used from Android (`as_vault/system` channel:
+  `storageStats`, `clearAppCache`), thumbnail cache size + clear, theme
+  (System/Light/Dark), photo grid density 2–5, per-kind sorting, version/build,
+  architecture, package, privacy. All controls perform real work.
+
+**Icon**
+
+- `tool/generate_icon.py` builds the launcher art from
+  `assets/icon/source_rose.jpg` (byte-identical to the supplied photo):
+  feathered 68% foreground, dark blurred backdrop with a restrained red halo,
+  no text/frame. Outputs adaptive foreground/background, legacy icons
+  (48–192 px), round variants, 512/1024 exports and circle/square/squircle
+  mask previews. `tool/bootstrap.sh` copies `android_overrides/res` into the
+  generated project.
+- Manifest: label `AS Vault`, `android:icon` / `android:roundIcon` wired; adaptive
+  XML keeps no monochrome layer (keeps the rose visible on every mask).
+
+**CI / build**
+
+- Workflow builds `flutter build apk --release --target-platform android-arm64`,
+  bootstraps `abiFilters arm64-v8a`, verifies no other ABI, checks label /
+  `native-code`, and publishes `AS-Vault-<version>-arm64.apk` to a GitHub
+  Release (public, resumable).
+- Fixed a YAML indentation error that made the workflow file invalid, and the
+  analyzer errors surfaced by the first 1.1.0 run (`outlineVariant` scope,
+  `_IdentityCard.build` field name, unused import, const lints).
+- `tool/build.sh` now builds arm64 only, matching CI.
+
+**Verification**
+
+- `flutter analyze` → 0 errors; `flutter test` → all pass (sorting + formatting).
+- CI run [42350072438](https://github.com/xorgxxx/nova_media/actions/runs/42350072438)
+  (commit `7e79684`) green: analyze → tests → bootstrap → arm64 build → verify →
+  Release publish.
+- Release `v1.1.0` asset `AS-Vault-1.1.0-arm64.apk`:
+  **21,937,428 bytes**, SHA-256
+  `dd718dc2a8d9a9cd6d6994a3c62ad269896edcd64f4b017eaad93c3394612e13`,
+  versionName `1.1.0` / versionCode `2`, targetSdk 36.
+- `tool/verify_apk.sh`: label `AS Vault`, `native-code: arm64-v8a`, no
+  `armeabi-v7a`/`x86`/`x86_64` libraries ("ABI check: arm64-v8a only").
+
+**Not verifiable in CI**
+
+- No device/emulator: permissions, system delete sheet, playback and icon masks
+  are not runtime-tested. Icon resources are linked and the APK label verified
+  with `aapt2`; visual mask check must be done on a phone.
+- Debug signing (unchanged), so the APK is for direct install, not Play Store.
+
 ## 2026-11-05 — Cloud build pipeline (GitHub Actions)
 
 **Context.** The project had never been compiled. On the author's machine
