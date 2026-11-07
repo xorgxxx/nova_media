@@ -133,6 +133,7 @@ class _MusicTabState extends ConsumerState<MusicTab> {
         slivers: _segment == 2
             ? [const PlaylistsSliver(kind: _kind)]
             : assets.when(
+                skipLoadingOnReload: true,
                 loading: () => [loadingSliver(label: 'Reading your music library…')],
                 error: (e, _) => [
                   emptySliver(

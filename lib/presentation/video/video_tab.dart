@@ -126,6 +126,7 @@ class _VideoTabState extends ConsumerState<VideoTab> {
         slivers: _segment == 2
             ? [const PlaylistsSliver(kind: _kind)]
             : assets.when(
+                skipLoadingOnReload: true,
                 loading: () => [loadingSliver(label: 'Reading your video library…')],
                 error: (e, _) => [
                   emptySliver(

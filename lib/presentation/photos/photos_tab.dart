@@ -168,6 +168,7 @@ class _PhotosTabState extends ConsumerState<PhotosTab> {
     AppSettings settings,
   ) {
     return assets.when(
+      skipLoadingOnReload: true,
       loading: () => [loadingSliver(label: 'Loading photos…')],
       error: (e, _) => [
         emptySliver(

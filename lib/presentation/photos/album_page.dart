@@ -160,6 +160,7 @@ class _AlbumPageState extends ConsumerState<AlbumPage> {
                   ),
                 ),
               ...assets.when(
+                skipLoadingOnReload: true,
                 loading: () => [loadingSliver(label: 'Loading folder…')],
                 error: (e, _) => [
                   emptySliver(
