@@ -62,7 +62,7 @@ class _SortSheet extends ConsumerWidget {
                     ?.copyWith(color: cs.onSurfaceVariant),
               ),
               const SizedBox(height: 24),
-              _SectionLabel('SORT BY'),
+              const _SectionLabel('SORT BY'),
               const SizedBox(height: 10),
               _OptionsCard(
                 children: [
@@ -77,7 +77,7 @@ class _SortSheet extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 22),
-              _SectionLabel('SORT ORDER'),
+              const _SectionLabel('SORT ORDER'),
               const SizedBox(height: 10),
               Row(
                 children: [

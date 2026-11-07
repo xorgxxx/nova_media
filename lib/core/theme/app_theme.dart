@@ -241,7 +241,7 @@ class AppTheme {
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         strokeWidth: 2.6,
       ),
-      dividerTheme: DividerThemeData(color: outlineVariant, thickness: 1, space: 1),
+      dividerTheme: DividerThemeData(color: scheme.outlineVariant, thickness: 1, space: 1),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: containerHigh,

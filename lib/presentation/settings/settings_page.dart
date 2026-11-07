@@ -6,7 +6,6 @@ import 'package:photo_manager/photo_manager.dart';
 import '../../application/providers.dart';
 import '../../core/system/device_storage.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/widgets/common_widgets.dart';
 import '../../data/models/app_settings.dart';
 import '../../data/models/media_kind.dart';
 import '../common/sort_sheet.dart';
@@ -107,7 +106,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                 child: _IdentityCard(
                   version: _package?.version ?? '1.1.0',
-                  build: _package?.buildNumber ?? '2',
+                  buildNumber: _package?.buildNumber ?? '2',
                 ),
               ),
             ),
@@ -233,10 +232,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 }
 
 class _IdentityCard extends StatelessWidget {
-  const _IdentityCard({required this.version, required this.build});
+  const _IdentityCard({required this.version, required this.buildNumber});
 
   final String version;
-  final String build;
+  final String buildNumber;
 
   @override
   Widget build(BuildContext context) {
@@ -280,7 +279,7 @@ class _IdentityCard extends StatelessWidget {
                 Text('AS Vault', style: theme.textTheme.titleLarge),
                 const SizedBox(height: 2),
                 Text(
-                  'Version $version ($build) · arm64-v8a',
+                  'Version $version ($buildNumber) · arm64-v8a',
                   style: theme.textTheme.bodySmall
                       ?.copyWith(color: cs.onSurfaceVariant),
                 ),
